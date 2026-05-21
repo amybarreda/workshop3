@@ -1,0 +1,163 @@
+========== YEAR 2015 ==========
+Shape: (158, 12)
+Duplicates: 0
+
+Missing values:
+Series([], )
+
+Data Types:
+Country                           object
+Region                            object
+Happiness Rank                     int64
+Happiness Score                  float64
+Standard Error                   float64
+Economy (GDP per Capita)         float64
+Family                           float64
+Health (Life Expectancy)         float64
+Freedom                          float64
+Trust (Government Corruption)    float64
+Generosity                       float64
+Dystopia Residual                float64
+
+Outliers (Numeric Describe):
+                                   min        max       mean        std
+Happiness Rank                 1.00000  158.00000  79.493671  45.754363
+Happiness Score                2.83900    7.58700   5.375734   1.145010
+Standard Error                 0.01848    0.13693   0.047885   0.017146
+Economy (GDP per Capita)       0.00000    1.69042   0.846137   0.403121
+Family                         0.00000    1.40223   0.991046   0.272369
+Health (Life Expectancy)       0.00000    1.02525   0.630259   0.247078
+Freedom                        0.00000    0.66973   0.428615   0.150693
+Trust (Government Corruption)  0.00000    0.55191   0.143422   0.120034
+Generosity                     0.00000    0.79588   0.237296   0.126685
+Dystopia Residual              0.32858    3.60214   2.098977   0.553550
+
+========== YEAR 2016 ==========
+Shape: (157, 13)
+Duplicates: 0
+
+Missing values:
+Series([], )
+
+Data Types:
+Country                           object
+Region                            object
+Happiness Rank                     int64
+Happiness Score                  float64
+Lower Confidence Interval        float64
+Upper Confidence Interval        float64
+Economy (GDP per Capita)         float64
+Family                           float64
+Health (Life Expectancy)         float64
+Freedom                          float64
+Trust (Government Corruption)    float64
+Generosity                       float64
+Dystopia Residual                float64
+
+Outliers (Numeric Describe):
+                                   min        max       mean        std
+Happiness Rank                 1.00000  157.00000  78.980892  45.466030
+Happiness Score                2.90500    7.52600   5.382185   1.141674
+Lower Confidence Interval      2.73200    7.46000   5.282395   1.148043
+Upper Confidence Interval      3.07800    7.66900   5.481975   1.136493
+Economy (GDP per Capita)       0.00000    1.82427   0.953880   0.412595
+Family                         0.00000    1.18326   0.793621   0.266706
+Health (Life Expectancy)       0.00000    0.95277   0.557619   0.229349
+Freedom                        0.00000    0.60848   0.370994   0.145507
+Trust (Government Corruption)  0.00000    0.50521   0.137624   0.111038
+Generosity                     0.00000    0.81971   0.242635   0.133756
+Dystopia Residual              0.81789    3.83772   2.325807   0.542220
+
+========== YEAR 2017 ==========
+Shape: (155, 12)
+Duplicates: 0
+
+Missing values:
+Series([], )
+
+Data Types:
+Country                           object
+Happiness.Rank                     int64
+Happiness.Score                  float64
+Whisker.high                     float64
+Whisker.low                      float64
+Economy..GDP.per.Capita.         float64
+Family                           float64
+Health..Life.Expectancy.         float64
+Freedom                          float64
+Generosity                       float64
+Trust..Government.Corruption.    float64
+Dystopia.Residual                float64
+
+Outliers (Numeric Describe):
+                                    min         max       mean        std
+Happiness.Rank                 1.000000  155.000000  78.000000  44.888751
+Happiness.Score                2.693000    7.537000   5.354019   1.131230
+Whisker.high                   2.864884    7.622030   5.452326   1.118542
+Whisker.low                    2.521116    7.479556   5.255713   1.145030
+Economy..GDP.per.Capita.       0.000000    1.870766   0.984718   0.420793
+Family                         0.000000    1.610574   1.188898   0.287263
+Health..Life.Expectancy.       0.000000    0.949492   0.551341   0.237073
+Freedom                        0.000000    0.658249   0.408786   0.149997
+Generosity                     0.000000    0.838075   0.246883   0.134780
+Trust..Government.Corruption.  0.000000    0.464308   0.123120   0.101661
+Dystopia.Residual              0.377914    3.117485   1.850238   0.500028
+
+========== YEAR 2018 ==========
+Shape: (156, 9)
+Duplicates: 0
+
+Missing values:
+Perceptions of corruption    1
+
+Data Types:
+Overall rank                      int64
+Country or region                object
+Score                           float64
+GDP per capita                  float64
+Social support                  float64
+Healthy life expectancy         float64
+Freedom to make life choices    float64
+Generosity                      float64
+Perceptions of corruption       float64
+
+Outliers (Numeric Describe):
+                                min      max       mean        std
+Overall rank                  1.000  156.000  78.500000  45.177428
+Score                         2.905    7.632   5.375917   1.119506
+GDP per capita                0.000    2.096   0.891449   0.391921
+Social support                0.000    1.644   1.213237   0.302372
+Healthy life expectancy       0.000    1.030   0.597346   0.247579
+Freedom to make life choices  0.000    0.724   0.454506   0.162424
+Generosity                    0.000    0.598   0.181006   0.098471
+Perceptions of corruption     0.000    0.457   0.112000   0.096492
+
+========== YEAR 2019 ==========
+Shape: (156, 9)
+Duplicates: 0
+
+Missing values:
+Series([], )
+
+Data Types:
+Overall rank                      int64
+Country or region                object
+Score                           float64
+GDP per capita                  float64
+Social support                  float64
+Healthy life expectancy         float64
+Freedom to make life choices    float64
+Generosity                      float64
+Perceptions of corruption       float64
+
+Outliers (Numeric Describe):
+                                min      max       mean        std
+Overall rank                  1.000  156.000  78.500000  45.177428
+Score                         2.853    7.769   5.407096   1.113120
+GDP per capita                0.000    1.684   0.905147   0.398389
+Social support                0.000    1.624   1.208814   0.299191
+Healthy life expectancy       0.000    1.141   0.725244   0.242124
+Freedom to make life choices  0.000    0.631   0.392571   0.143289
+Generosity                    0.000    0.566   0.184846   0.095254
+Perceptions of corruption     0.000    0.453   0.110603   0.094538
+
