@@ -68,43 +68,32 @@ try:
     col_l, col_r = st.columns([1, 1])
 
     with col_l:
-        st.subheader("Features Drift Over Time")
+        st.subheader("📈 Features Drift")
         df_drift = load_data("SELECT * FROM vw_features_drift")
         if not df_drift.empty:
-            # Melt dataframe for plotly express line chart
             df_melted = df_drift.melt(id_vars=['year'], value_vars=['avg_gdp', 'avg_family', 'avg_health', 'avg_freedom'], 
                                       var_name='Feature', value_name='Average Score')
-            
-            # Clean up feature names
             df_melted['Feature'] = df_melted['Feature'].str.replace('avg_', '')
             
             fig_drift = px.line(
                 df_melted, x='year', y='Average Score', color='Feature', markers=True,
-                color_discrete_sequence=['#5BC0BE', '#6FFFE9', '#3A506B', '#E76F51']
-            )
-            fig_drift.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#E0E0E0'),
-                xaxis=dict(showgrid=True, gridcolor='#1C2541'), yaxis=dict(showgrid=True, gridcolor='#1C2541')
+                color_discrete_sequence=['#5BC0BE', '#6FFFE9', '#3A506B', '#E76F51'],
+                template="plotly_dark"
             )
             st.plotly_chart(fig_drift, use_container_width=True)
 
     with col_r:
-        st.subheader("Predictions by Country")
-        df_country = load_data("SELECT * FROM vw_predictions_by_country LIMIT 20")
+        st.subheader("📊 Actual vs Predicted (by Country)")
+        df_country = load_data("SELECT * FROM vw_predictions_by_country LIMIT 15")
         if not df_country.empty:
-            # Combo Chart: Bars for Actual, Line for Predicted
-            fig_country = go.Figure()
-            fig_country.add_trace(go.Bar(
-                x=df_country['country_name'], y=df_country['avg_actual_score'],
-                name='Actual Score', marker_color='#3A506B'
-            ))
-            fig_country.add_trace(go.Scatter(
-                x=df_country['country_name'], y=df_country['avg_predicted_score'],
-                name='Predicted Score', mode='lines+markers', marker_color='#5BC0BE'
-            ))
+            # Grouped Bar Chart to reduce visual noise
+            fig_country = go.Figure(data=[
+                go.Bar(name='Actual Score', x=df_country['country_name'], y=df_country['avg_actual_score'], marker_color='#3A506B'),
+                go.Bar(name='Predicted Score', x=df_country['country_name'], y=df_country['avg_predicted_score'], marker_color='#5BC0BE')
+            ])
             fig_country.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#E0E0E0'),
-                xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='#1C2541'),
+                barmode='group',
+                template="plotly_dark",
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
             st.plotly_chart(fig_country, use_container_width=True)
@@ -115,7 +104,7 @@ try:
     col_bl, col_br = st.columns([1, 1])
 
     with col_bl:
-        st.subheader("Happiness Score Trends")
+        st.subheader("📉 Happiness Trends")
         df_trends = load_data("SELECT * FROM vw_prediction_trends")
         if not df_trends.empty:
             fig_trends = go.Figure()
@@ -127,30 +116,33 @@ try:
                 x=df_trends['year'], y=df_trends['avg_predicted_score'],
                 name='Predicted Score', mode='lines+markers', line=dict(color='#5BC0BE', width=3, dash='dot')
             ))
-            # Dynamically adjust Y-axis to NOT start at 0 so variance is visible
-            min_y = min(df_trends['avg_actual_score'].min(), df_trends['avg_predicted_score'].min()) * 0.95
-            max_y = max(df_trends['avg_actual_score'].max(), df_trends['avg_predicted_score'].max()) * 1.05
-            
             fig_trends.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#E0E0E0'),
-                xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='#1C2541', range=[min_y, max_y]),
+                template="plotly_dark", 
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
             st.plotly_chart(fig_trends, use_container_width=True)
 
     with col_br:
-        st.subheader("Predicted vs Actual Scores")
+        st.subheader("🎯 Model Accuracy (Scatter)")
         df_scatter = load_data("SELECT * FROM vw_predicted_vs_actual")
         if not df_scatter.empty:
             fig_scatter = px.scatter(
                 df_scatter, x='actual_score', y='predicted_score', 
                 color='prediction_error', size='prediction_error',
-                color_continuous_scale='Tealgrn', opacity=0.7
+                color_continuous_scale='Tealgrn', opacity=0.7,
+                template="plotly_dark"
             )
-            fig_scatter.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#E0E0E0'),
-                xaxis=dict(showgrid=True, gridcolor='#1C2541'), yaxis=dict(showgrid=True, gridcolor='#1C2541')
-            )
+            
+            # Identity Line (y=x) for perfect prediction reference
+            max_val = max(df_scatter['actual_score'].max(), df_scatter['predicted_score'].max()) * 1.05
+            min_val = min(df_scatter['actual_score'].min(), df_scatter['predicted_score'].min()) * 0.95
+            
+            fig_scatter.add_trace(go.Scatter(
+                x=[min_val, max_val], y=[min_val, max_val],
+                mode="lines", name="Perfect Prediction (y=x)",
+                line=dict(color="white", dash="dash", width=1)
+            ))
+            
             st.plotly_chart(fig_scatter, use_container_width=True)
 
 except Exception as e:
