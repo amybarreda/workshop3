@@ -7,7 +7,7 @@ This project implements an end-to-end Streaming ETL Pipeline to predict World Ha
 The architecture is divided into three parts:
 - **Part A (Offline Processing):** We perform Exploratory Data Analysis (EDA) on raw CSV files, harmonize their schemas, and train a `RandomForestRegressor`. The model is serialized as `model.pkl`.
 - **Part B (Streaming ETL):** A Kafka Producer streams the cleaned data row-by-row into a Kafka topic (`happiness-predictions`). A Kafka Consumer listens to this topic, validates the incoming JSON schema in real-time, generates a prediction using the serialized model, and stores the results.
-- **Part C (Storage & Analytics):** A PostgreSQL database stores the raw JSON events (for audit purposes) and a Star Schema (fact and dimension tables) containing the prediction results, enabling downstream BI dashboards.
+- **Part C (Storage & Analytics):** A PostgreSQL database stores the raw JSON events (for audit purposes) and an advanced **MLOps Star Schema** containing dimensions and prediction results, enabling real-time BI dashboards.
 
 ## 3. Data Cleaning Decisions
 During the EDA phase, we identified that the 2015-2019 datasets had inconsistent column names (e.g., `Economy (GDP per Capita)` vs `GDP per capita`). 
@@ -24,18 +24,27 @@ For the ML training phase, we strictly selected socio-economic indicators as fea
 - **Producer:** Simulates a real-time stream by reading the harmonized historical data and pushing each row as a JSON payload to Kafka.
 - **Consumer Validation:** The consumer is fault-tolerant. It saves every raw message to a PostgreSQL table `raw_happiness_events` with a `PENDING` status. It then rigorously checks for missing fields or negative values. If validation fails, it marks the DB record as `INVALID_SCHEMA` and skips prediction without crashing the pipeline.
 
-## 6. Database Schema
-The analytical database (PostgreSQL) implements a Star Schema:
+## 6. Database Design (MLOps Star Schema)
+The analytical database (PostgreSQL) implements a highly robust Star Schema, fulfilling and exceeding standard requirements by adding an MLOps dimension:
 - **`raw_happiness_events`**: The audit table holding the exact JSON payload and its processing status.
 - **`dim_country`**: Dimension table storing country names.
 - **`dim_date`**: Dimension table storing the year.
-- **`fact_predictions`**: The fact table linking the raw event and dimensions. It stores the `actual_score`, `predicted_score`, and the calculated `prediction_error`.
+- **`dim_raw_event`**: Dimension table that strictly structures the numerical features (`gdp`, `family`, `health`, etc.) extracted from the valid JSON payload.
+- **`dim_model` (Justified Addition)**: MLOps dimension storing the exact Model Name and Version that generated the prediction, enabling precise model tracking over time.
+- **`fact_predictions`**: The central fact table linking all dimensions. It stores the `actual_score`, `predicted_score`, and the calculated `prediction_error`.
 
 ## 7. Dashboard Explanation
-The database includes a set of pre-calculated SQL Views (`vw_avg_prediction_error`, `vw_predictions_by_country`, `vw_predicted_vs_actual`, `vw_prediction_trends`). These views power a BI Dashboard (e.g., Power BI) to display:
-1. Average prediction error across the dataset.
-2. Total predictions and error margins grouped by country.
-3. Trends showing how the happiness score and the model's accuracy evolve over time.
+A Python-based **Streamlit + Plotly** dashboard (`dashboards/app.py`) executes SQL views (`sql/kpis.sql`) directly against PostgreSQL. It features a Premium Deep Navy theme and interactive charts.
+
+**KPI Explanations:**
+1. **Average Prediction Error (MAE):** The global Mean Absolute Error across all predictions. A lower number indicates the model is highly accurate in real-time inference.
+2. **Records Status (Donut Chart):** Tracks the validation state of the Kafka stream (`VALID`, `INVALID_SCHEMA`, `INVALID_VALUES`). Critical for monitoring data pipeline health.
+3. **Features Drift Over Time:** Tracks the evolution of the independent variables (`gdp`, `family`, `health`, `freedom`) across years. Essential for detecting if the underlying data distribution is changing, which might trigger a model retraining.
+4. **Predictions by Country (Combo Chart):** A bar chart of the actual scores overlayed with a trend line for predicted scores. Identifies geographical bias in the model.
+5. **Happiness Score Trends:** A line chart comparing the global average actual score vs the predicted score over time. Verifies if the model captures temporal macro-trends despite `year` being excluded from training.
+6. **Predicted vs Actual (Scatter Plot):** Assesses the variance and heteroscedasticity of the model's errors. A perfect model would form a tight diagonal line.
+
+*Note: Screenshots of the functioning dashboard are located in the `images/` directory.*
 
 ## 8. Execution Instructions
 
@@ -53,6 +62,7 @@ This will start Zookeeper, Kafka, and PostgreSQL.
 ```bash
 uv venv
 uv pip install -r requirements.txt
+uv pip install streamlit
 ```
 
 **3. Run the Streaming Pipeline:**
@@ -67,4 +77,8 @@ uv run python kafka/producer.py
 ```
 
 **4. View Dashboards:**
-Connect your BI tool (Power BI/Tableau) to `postgresql://user:password@localhost:5432/streaming_etl` and query the views in `sql/kpis.sql`.
+In a third terminal window, start the Streamlit Dashboard:
+```bash
+uv run streamlit run dashboards/app.py
+```
+Open your browser at `http://localhost:8501` to view the live KPIs.

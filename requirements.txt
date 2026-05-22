@@ -7,3 +7,5 @@ scikit-learn
 kafka-python
 psycopg2-binary
 SQLAlchemy
+streamlit
+plotly

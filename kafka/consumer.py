@@ -12,19 +12,24 @@ BOOTSTRAP_SERVERS = "localhost:9092"
 DB_URI = "postgresql://user:password@localhost:5432/streaming_etl"
 MODEL_PATH = os.path.join("models", "model.pkl")
 
+# MLOps Model Versioning
+MODEL_NAME = "RandomForestRegressor"
+MODEL_VERSION = "1.0"
+
 def init_db(engine):
-    sql_path = os.path.join("sql", "create_tables.sql")
-    if os.path.exists(sql_path):
-        with open(sql_path, 'r') as f:
-            sql_script = f.read()
-        with engine.connect() as conn:
-            for statement in sql_script.split(';'):
-                if statement.strip():
-                    conn.execute(text(statement))
-            conn.commit()
-        print("Database initialized successfully.")
-    else:
-        print("Warning: sql/create_tables.sql not found.")
+    for script_name in ["create_tables.sql", "kpis.sql"]:
+        sql_path = os.path.join("sql", script_name)
+        if os.path.exists(sql_path):
+            with open(sql_path, 'r') as f:
+                sql_script = f.read()
+            with engine.connect() as conn:
+                for statement in sql_script.split(';'):
+                    if statement.strip():
+                        conn.execute(text(statement))
+                conn.commit()
+            print(f"{script_name} initialized successfully.")
+        else:
+            print(f"Warning: sql/{script_name} not found.")
 
 def validate_event(event):
     """
@@ -69,6 +74,19 @@ def consume_stream():
     print("Consumer is running. Waiting for events...")
     
     with engine.connect() as conn:
+        # Register Model in dim_model
+        model_insert = text("""
+            INSERT INTO dim_model (model_name, version) 
+            VALUES (:model_name, :version) 
+            ON CONFLICT (model_name, version) DO NOTHING
+        """)
+        conn.execute(model_insert, {"model_name": MODEL_NAME, "version": MODEL_VERSION})
+        conn.commit()
+        model_id = conn.execute(
+            text("SELECT model_id FROM dim_model WHERE model_name = :n AND version = :v"),
+            {"n": MODEL_NAME, "v": MODEL_VERSION}
+        ).scalar()
+        
         for message in consumer:
             event = message.value
             print(f"\nReceived event: {event.get('country', 'Unknown')} - {event.get('year', 'Unknown')}")
@@ -99,39 +117,42 @@ def consume_stream():
                 print(f"  > Actual: {actual_score} | Predicted: {predicted_score:.4f} | Error: {prediction_error}")
                 
                 # 4a. Store Dimension (Country)
-                country_insert = text("""
-                    INSERT INTO dim_country (country_name) 
-                    VALUES (:country_name) 
-                    ON CONFLICT (country_name) DO NOTHING
-                """)
-                conn.execute(country_insert, {"country_name": event['country']})
+                conn.execute(text("INSERT INTO dim_country (country_name) VALUES (:c) ON CONFLICT DO NOTHING"), {"c": event['country']})
                 conn.commit()
-                country_query = text("SELECT country_id FROM dim_country WHERE country_name = :country_name")
-                country_id = conn.execute(country_query, {"country_name": event['country']}).scalar()
+                country_id = conn.execute(text("SELECT country_id FROM dim_country WHERE country_name = :c"), {"c": event['country']}).scalar()
                 
                 # 4b. Store Dimension (Date/Year)
-                date_insert = text("""
-                    INSERT INTO dim_date (year) 
-                    VALUES (:year) 
-                    ON CONFLICT (year) DO NOTHING
-                """)
-                conn.execute(date_insert, {"year": event['year']})
+                conn.execute(text("INSERT INTO dim_date (year) VALUES (:y) ON CONFLICT DO NOTHING"), {"y": event['year']})
                 conn.commit()
-                date_query = text("SELECT date_id FROM dim_date WHERE year = :year")
-                date_id = conn.execute(date_query, {"year": event['year']}).scalar()
+                date_id = conn.execute(text("SELECT date_id FROM dim_date WHERE year = :y"), {"y": event['year']}).scalar()
+                
+                # 4c. Store Dimension (Raw Event Features)
+                raw_dim_insert = text("""
+                    INSERT INTO dim_raw_event (
+                        raw_event_id, gdp, family, health, freedom, generosity, corruption
+                    ) VALUES (
+                        :id, :g, :fa, :h, :fr, :ge, :c
+                    ) ON CONFLICT (raw_event_id) DO NOTHING
+                """)
+                conn.execute(raw_dim_insert, {
+                    "id": raw_event_id, "g": event['gdp'], "fa": event['family'], 
+                    "h": event['health'], "fr": event['freedom'], "ge": event['generosity'], "c": event['corruption']
+                })
+                conn.commit()
                 
                 # 5. Store Fact (Prediction)
                 fact_insert = text("""
                     INSERT INTO fact_predictions (
-                        raw_event_id, country_id, date_id, actual_score, predicted_score, prediction_error
+                        raw_event_id, country_id, date_id, model_id, actual_score, predicted_score, prediction_error
                     ) VALUES (
-                        :raw_event_id, :country_id, :date_id, :actual_score, :predicted_score, :prediction_error
+                        :raw_event_id, :country_id, :date_id, :model_id, :actual_score, :predicted_score, :prediction_error
                     )
                 """)
                 conn.execute(fact_insert, {
                     "raw_event_id": raw_event_id,
                     "country_id": country_id,
                     "date_id": date_id,
+                    "model_id": model_id,
                     "actual_score": actual_score,
                     "predicted_score": predicted_score,
                     "prediction_error": prediction_error
