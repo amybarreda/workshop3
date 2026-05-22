@@ -50,3 +50,9 @@ CREATE TABLE IF NOT EXISTS fact_predictions (
     prediction_error NUMERIC,
     prediction_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Performance Indices for Star Schema Joins
+CREATE INDEX IF NOT EXISTS idx_fact_country ON fact_predictions(country_id);
+CREATE INDEX IF NOT EXISTS idx_fact_date ON fact_predictions(date_id);
+CREATE INDEX IF NOT EXISTS idx_fact_raw ON fact_predictions(raw_event_id);
+CREATE INDEX IF NOT EXISTS idx_fact_model ON fact_predictions(model_id);
